@@ -1,11 +1,14 @@
 pipeline {
     agent any
 
+    tools{
+        ansible 'ansible'
+    }
     environment {
         ANSIBLE_HOST_KEY_CHECKING = 'false'
         DOCKER_IMAGE_NAME = 'myapp'
-        DOCKER_IMAGE_TAG = 'latest'
-        DOCKER_IMAGE_FILE = "${DOCKER_IMAGE_NAME}.tar"
+        DOCKER_IMAGE_TAG = ${env.BUILD_NUMBER}
+        DOCKER_IMAGE_FILE = "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}.tar"
         RECIPIENTS = 'team@example.com'
     }
 
@@ -74,7 +77,7 @@ pipeline {
         stage('Send Grafana Setup Notification') {
             steps {
                 script {
-                    def grafanaURL = 'http://vm4.example.com:3000' // Replace with actual Grafana URL
+                    def grafanaURL = 'http://vm4.example.com:3000'
 
                     emailext(
                         subject: "Grafana Setup Notification: ${currentBuild.fullDisplayName}",
