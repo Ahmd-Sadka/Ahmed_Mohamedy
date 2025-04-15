@@ -1,0 +1,24 @@
+---
+# defaults file for grafana
+
+# Grafana version to install
+grafana_version: "latest"
+
+grafana_yum_repo_url: "https://rpm.grafana.com"
+grafana_yum_repo_key: "https://packages.grafana.com/gpg.key"
+
+# Grafana package name
+grafana_package: "grafana"
+
+# Grafana service name
+grafana_service: "grafana-server"
+
+grafana_admin_user: "admin"
+
+grafana_admin_password: "admin"
+
+
+grafana_port: "3000"
+
+grafana_plugins: []
+

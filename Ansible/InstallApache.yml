@@ -1,0 +1,28 @@
+---
+- name: Install Apache Web Server
+  hosts: web_server
+  become: true
+  tasks:
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Start Apache service
+      service:
+        name: apache2
+        state: started
+        enabled: true
+
+    - name: open firewall port 80
+      ufw:
+        rule: allow
+        name: 'Apache Full'
+        state: enabled
+        immediate: yes
+
+    - name: Ensure Apache is running
+      wait_for:
+        port: 80
+        delay: 10
+        timeout: 30

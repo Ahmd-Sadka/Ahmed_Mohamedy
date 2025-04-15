@@ -1,0 +1,15 @@
+---
+# handlers file for grafana
+
+- name: restart grafana
+  service:
+    name: "{{ grafana_service }}"
+    state: restarted
+  #when: ansible_os_family == "RedHat"
+  tags: grafana
+
+- name: restart firewalld
+  service:
+    name: firewalld
+    state: restarted
+  tags: grafana

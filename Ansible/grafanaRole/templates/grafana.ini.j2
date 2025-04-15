@@ -1,0 +1,19 @@
+[server]
+http_port = {{ grafana_port }}
+
+[security]
+admin_user = {{ grafana_admin_user }}
+admin_password = {{ grafana_admin_password }}
+
+[database]
+type = sqlite3
+
+[analytics]
+reporting_enabled = false
+check_for_updates = false
+
+[auth]
+disable_login_form = false
+
+[users]
+auto_assign_org_role = Editor

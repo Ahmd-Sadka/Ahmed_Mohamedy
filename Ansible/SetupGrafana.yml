@@ -1,0 +1,8 @@
+---
+- name: Setup Grafana Server
+  hosts: grafana_server
+  become: true
+  roles:
+    - role: grafanaRole
+      tags: [grafana, monitoring]
+      

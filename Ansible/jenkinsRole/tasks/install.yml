@@ -1,0 +1,45 @@
+---
+- name: "add redhat stable jenkins repo"
+  ansible.builtin.get_url:
+    url: "https://pkg.jenkins.io/redhat-stable/jenkins.repo"
+    dest: /etc/yum.repos.d/jenkins.repo
+    mode: '0644'
+  become: yes
+
+- name: "add jenkins gpg key"
+  ansible.builtin.rpm_key:
+    key: https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+    state: present
+  become: yes
+    
+
+- name: Update Yum Cache
+  ansible.builtin.yum:
+    update_cache: yes
+  become: yes
+
+- name: "Install Java"
+  ansible.builtin.package:
+    name: "{{ java_packages }}"
+    state: present
+  become: yes
+
+- name: "Install Git"
+  ansible.builtin.package:
+    name: "git"
+    state: present
+  become: yes
+
+- name: "Install Jenkins"
+  ansible.builtin.package:
+    name: "{{ jenkins_packages }}"
+    state: present
+  become: yes
+
+- name: "Start Jenkins"
+  ansible.builtin.service:
+    name: jenkins
+    state: started
+    enabled: yes
+  become: yes
+  notify: Wait for Jenkins to Warm Up

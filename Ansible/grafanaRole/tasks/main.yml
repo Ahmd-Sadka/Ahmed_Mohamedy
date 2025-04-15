@@ -1,0 +1,62 @@
+---
+# tasks file for grafana
+
+- name: add grafana repo
+  ansible.builtin.yum_repository:
+    name: grafana
+    description: Grafana YUM Repository
+    baseurl: "{{ grafana_yum_repo_url }}"
+    gpgcheck: yes
+    gpgkey: "{{ grafana_yum_repo_key }}"
+    enabled: yes
+  tags: grafana
+
+- name: Install Grafana
+  ansible.builtin.yum:
+    name: "{{ grafana_package }}"
+    state: present
+  tags: grafana
+
+- name: Configure Grafana
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart grafana
+  tags: grafana
+
+- name: Start Grafana service
+  ansible.builtin.service:
+    name: "{{ grafana_service }}"
+    state: started
+    enabled: true
+  tags: grafana
+
+- name: install firewalld
+  ansible.builtin.yum:
+    name: firewalld
+    state: present
+  tags: grafana
+
+- name: start firewalld
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+  tags: grafana
+  
+
+- name: configure firewall for Grafana
+  ansible.builtin.firewalld:
+    port: "{{ grafana_port }}/tcp"
+    immediate: yes
+    permanent: true
+    state: enabled
+  notify: restart firewalld
+  tags: grafana
+
+  
+
+

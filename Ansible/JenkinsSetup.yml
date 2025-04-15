@@ -1,0 +1,9 @@
+---
+- name: Setup Jenkins Server
+  hosts: jenkins_server
+  become: true
+  vars_files:
+    - secrets/vault.yml
+  roles:
+    - role: jenkinsRole
+      tags: [jenkins, ci_cd]

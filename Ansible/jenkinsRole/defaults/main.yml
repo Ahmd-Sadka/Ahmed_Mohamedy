@@ -1,0 +1,29 @@
+---
+
+java_packages: "java-17-amazon-corretto"
+
+
+jenkins_packages: "jenkins"
+
+# Jenkins settings
+jenkins_port: 8080
+jenkins_user: "Ahmed"
+jenkins_initial_password_file: "/var/lib/jenkins/secrets/initialAdminPassword"
+
+# Plugins to install
+jenkins_plugins:
+  - git
+  - pipeline
+  - github
+  - docker-plugin
+  - ssh-agent
+  - credentials-binding
+  - docker-workflow
+
+ 
+
+# Credentials (placeholders—secure these later!)
+github_credentials:
+  id: "github-creds"
+  username: ""
+  token: ""
