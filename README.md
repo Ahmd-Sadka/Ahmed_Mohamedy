@@ -1,66 +1,238 @@
+🚀 Jenkins CI/CD Pipeline with Ansible & Docker
+📋 Overview
+This project establishes a robust CI/CD pipeline using Jenkins, integrating Ansible for configuration management and Docker for containerization. It automates the following tasks:
 
+Apache Installation on VM3 via Ansible.
 
-## Project Description:
-### 1. The candidate must provision four VMs with the following services (Minmun specs are aceptable):
+Docker Image Build from the provided Dockerfile.
 
-- VM1: Jenkins Server
-- VM2: Gogs Server
-- VM3: Web Server (Apache)
-- VM4: A monitoring server with Grafana installed.
+Docker Image Archiving as a .tar file.
 
+Email Notifications detailing pipeline execution status, deploy group users, execution timestamp, and Docker image path.
 
-### 2. User Management on VM3:
-*The candidate will create users on VM3 as follows:*
+Grafana Setup on VM4 via Ansible.
 
-- Using bash script create three users named Devo, Testo, and Prodo on VM3.
-- Add these users to a group named "deployG" for centralized access control.
-- Implement a user deletion script to remove a user based on the username provided as an argument.
+Grafana Notification with setup status and dashboard URL.
 
-### 3. Gogs Integration with Jenkins:
-The candidate will integrate Gogs with Jenkins to automate deployment processes triggered by web hook.
+🧰 Prerequisites
+Jenkins installed and configured.
 
+Ansible installed on the Jenkins host.
 
-### 4. Creating a Git repository on Gogs.
-- Develop an Ansible playbook named InstallApache.yml within the repository to automate the installation of Apache on VM3 (ensure the service is up and running).
-- Develop a Bash script named NotGroupMembers.sh to retrieve a list of users not inside the "deployG" group.
-- Create Ansible playbook named SetupGrafana.yml to install and configure Grafana on VM4.
+Docker installed on the Jenkins host.
 
-### 5. CI/CD Pipeline Configuration:
-The candidate will configure Jenkins to monitor the Gogs repository for any changes.
+Gogs repository accessible at http://34.238.49.245:10880.
 
-### 6. Pipeline Automation:
-Upon detecting a code commit, the Jenkins pipeline will autonomously execute the following actions:
+SSH Access to VM3 and VM4 for Ansible playbook execution.
 
-- Trigger the execution of the Ansible playbook (InstallApache.yml) for Apache installation on VM3.
-- Build a Docker image using the provided Dockerfile, then save it locally using the command docker save <image_name> > <image_name>.tar, and archive the tar file.
+Email Server configured for sending notifications.
 
-- Run a final stage to send an email notification. This notification will include vital details such as:
-    - Pipeline execution status.
-    - List of users in the "deployG" group.
-    - Date and time of the pipeline execution.
-    - Path to Docker image.tar
-- Trigger the execution of the Ansible playbook (SetupGrafana.yml) for Grafana installation on VM4.
-- Send a separate email notification containing the Grafana setup status and the URL to access the Grafana dashboard.
+🛠️ Setup Instructions
+Clone the Repository:
 
-### *Additional Information:*
-- Configure firewall rules or port forwarding if required.
-- Ensure that the servers' operating systems are either CentOS or RockyLinux.
-- You have the right to choose which email notification configuration to use Bash, Ansible, or Jenkins for implementation.
+bash
+Copy
+Edit
+git clone http://34.238.49.245:10880/Ahmd-Sadka/Ahmed_Mohamedy.git
+cd Ahmed_Mohamedy
+Configure Jenkins:
 
-### `Definition of Done to Proceed to Next Phase:` 
+Create a new Jenkins pipeline job named Ahmed_mohamedy.
 
-1- Sharing a git repo with Three3mr (Github ID) as collaborator containing the below:
-  - Bash scripts.
-  - Ansible playbooks.
-  - Jenkinsfile containing the stages.
-  - README file documenting the Ansible playbooks and Jenkins pipeline configuration with screenshoots.
-  - Use your first and last names as the repository name using github.
-  - Presentation:
-    - Sharing a presentation with your: <first_name>.<last_name>
-    - Screenshots showcases your understanding of the project and the implemented solution.
-    - Maximum 6 slide (no need for intro/index slides).
+In the pipeline configuration, set the repository URL to http://34.238.49.245:10880/Ahmd-Sadka/Ahmed_Mohamedy.git.
 
+Use the credential ID gogs for repository access.
 
-### ` Candidate Inputs: `
+Set Up Webhook in Gogs:
 
-.....
+Navigate to your repository in Gogs.
+
+Go to Settings > Webhooks > Add Webhook.
+
+Set the payload URL to:
+
+perl
+Copy
+Edit
+http://<jenkins-server>/gogs-webhook/?job=Ahmed_mohamedy
+Replace <jenkins-server> with your Jenkins server's address.
+
+Configure Ansible Inventory:
+
+Update the inventory file with the IP addresses or hostnames of VM3 and VM4.
+
+Set Up Email Notifications:
+
+Configure Jenkins to use your SMTP server for sending emails.
+
+Ensure the mail plugin is installed and properly configured.
+
+📂 Project Structure
+css
+Copy
+Edit
+Ahmed_Mohamedy/
+├── Jenkinsfile
+├── roles/
+│   ├── install_apache/
+│   │   ├── tasks/
+│   │   │   └── main.yml
+│   │   └── README.md
+│   └── setup_grafana/
+│       ├── tasks/
+│       │   └── main.yml
+│       └── README.md
+├── Dockerfile
+├── inventory
+└── scripts/
+    ├── build_docker.sh
+    └── send_email.sh
+📜 Jenkinsfile Breakdown
+groovy
+Copy
+Edit
+pipeline {
+    agent any
+
+    environment {
+        GOGS_CREDENTIAL = credentials('gogs')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo "Checking out code from Gogs repository"
+                git branch: 'main', url: 'http://34.238.49.245:10880/Ahmd-Sadka/Ahmed_Mohamedy.git', credentialsId: 'gogs'
+            }
+        }
+        stage('Install Apache on VM3') {
+            steps {
+                sh 'ansible-playbook -i inventory roles/install_apache/tasks/main.yml'
+            }
+        }
+        stage('Build and Archive Docker Image') {
+            steps {
+                sh './scripts/build_docker.sh'
+            }
+        }
+        stage('Send Deployment Email') {
+            steps {
+                sh './scripts/send_email.sh'
+            }
+        }
+        stage('Setup Grafana on VM4') {
+            steps {
+                sh 'ansible-playbook -i inventory roles/setup_grafana/tasks/main.yml'
+            }
+        }
+        stage('Send Grafana Setup Email') {
+            steps {
+                sh './scripts/send_email.sh --grafana'
+            }
+        }
+    }
+}
+📦 Ansible Roles Documentation
+📁 install_apache
+Description: Installs and configures Apache on VM3.
+
+Tasks:
+
+Update package repositories.
+
+Install Apache.
+
+Start and enable Apache service.
+
+Variables:
+
+apache_port: Port on which Apache will listen (default: 80).
+
+Usage:
+
+bash
+Copy
+Edit
+ansible-playbook -i inventory roles/install_apache/tasks/main.yml
+📁 setup_grafana
+Description: Installs and configures Grafana on VM4.
+
+Tasks:
+
+Download and install Grafana.
+
+Start and enable Grafana service.
+
+Configure Grafana dashboard.
+
+Variables:
+
+grafana_admin_user: Admin username for Grafana.
+
+grafana_admin_password: Admin password for Grafana.
+
+Usage:
+
+bash
+Copy
+Edit
+ansible-playbook -i inventory roles/setup_grafana/tasks/main.yml
+🐳 Docker Image Build & Archive
+The build_docker.sh script performs the following:
+
+Builds the Docker image using the provided Dockerfile.
+
+Tags the image appropriately.
+
+Saves the image as a .tar file.
+
+Archives the .tar file for future use.
+
+Usage:
+
+bash
+Copy
+Edit
+./scripts/build_docker.sh
+📧 Email Notifications
+The send_email.sh script sends email notifications containing:
+
+Pipeline execution status.
+
+List of users in the deployG group.
+
+Date and time of execution.
+
+Path to the Docker image .tar file.
+
+Grafana dashboard URL (if applicable).
+
+Usage:
+
+bash
+Copy
+Edit
+./scripts/send_email.sh
+# For Grafana setup notification
+./scripts/send_email.sh --grafana
+🧪 Testing
+To test the Ansible playbooks:
+
+bash
+Copy
+Edit
+ansible-playbook -i inventory roles/install_apache/tasks/main.yml --check
+ansible-playbook -i inventory roles/setup_grafana/tasks/main.yml --check
+To test the Jenkins pipeline:
+
+Make a commit to the main branch.
+
+Observe the pipeline execution in Jenkins.
+
+📄 License
+This project is licensed under the MIT License.
+
+🤝 Contributing
+Contributions are welcome! Please fork the repository and submit a pull request.
+
+Feel free to customize this README.md to better fit your project's specifics.
