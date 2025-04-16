@@ -4,22 +4,38 @@
   become: true
   tasks:
     - name: Install Apache
-      apt:
-        name: apache2
+      yum:
+        name: httpd
         state: present
 
     - name: Start Apache service
       service:
-        name: apache2
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Install firewall
+      yum:
+        name: firewalld
+        state: present
+      
+    - name: Start firewall service
+      service:
+        name: firewalld
         state: started
         enabled: true
 
     - name: open firewall port 80
-      ufw:
-        rule: allow
-        name: 'Apache Full'
+      firewalld:
+        service: http
+        permanent: true
         state: enabled
         immediate: yes
+
+    - name: restart firewall
+      service:
+        name: firewalld
+        state: restarted
 
     - name: Ensure Apache is running
       wait_for:

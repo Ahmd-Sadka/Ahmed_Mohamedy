@@ -7,9 +7,9 @@ pipeline {
     environment {
         ANSIBLE_HOST_KEY_CHECKING = 'false'
         DOCKER_IMAGE_NAME = 'myapp'
-        DOCKER_IMAGE_TAG = ${env.BUILD_NUMBER}
+        DOCKER_IMAGE_TAG = "${env.BUILD_ID}"
         DOCKER_IMAGE_FILE = "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}.tar"
-        RECIPIENTS = 'team@example.com'
+        RECIPIENTS = 'ahmd.sadkaa@gmail.com'
     }
 
     stages {
@@ -26,11 +26,17 @@ pipeline {
 
         stage('Install Apache on VM3') {
             steps {
-                echo "Running Ansible playbook to install Apache on VM3"
-                sh 'cd Ansible'
-                sh 'ansible-playbook InstallApache.yml'
+                withCredentials([file(credentialsId: 'ansible-key', variable: 'ANSIBLE_KEY')]) {
+                    dir('./Ansible') {
+                        echo "Running Ansible playbook to install Apache on VM3"
+                        sh 'pwd'
+                        //sh 'ls -l'
+                        sh 'ansible-playbook InstallApache.yml --private-key $ANSIBLE_KEY'
+                }
+                }
             }
         }
+
 
         stage('Build and Archive Docker Image') {
             steps {
@@ -48,7 +54,8 @@ pipeline {
         stage('Send Build Notification') {
             steps {
                 script {
-                    def deployUsers = sh(script: "getent group deployG | cut -d: -f4", returnStdout: true).trim()
+                    def deployUsers = sh(script: "cd Ansible && ansible web_server -m shell -a 'cat Scripts/members.txt'", returnStdout: true).trim()
+                    def allohterUsers = sh(script: "cd Ansible && ansible web_server -m shell -a 'cat Scripts/non_members.txt'", returnStdout: true).trim()
                     def buildTime = new Date().format("yyyy-MM-dd HH:mm:ss", TimeZone.getTimeZone('Africa/Cairo'))
                     def dockerImagePath = "${env.WORKSPACE}/${DOCKER_IMAGE_FILE}"
 
@@ -57,6 +64,7 @@ pipeline {
                         body: """
                             <p>Pipeline Execution Status: ${currentBuild.currentResult}</p>
                             <p>DeployG Group Users: ${deployUsers}</p>
+                            <p>Non-DeployG Group Users: ${allohterUsers}</p>
                             <p>Execution Time: ${buildTime}</p>
                             <p>Docker Image Path: ${dockerImagePath}</p>
                         """,
@@ -69,15 +77,21 @@ pipeline {
 
         stage('Install Grafana on VM4') {
             steps {
-                echo "Running Ansible playbook to install Grafana on VM4"
-                sh 'ansible-playbook -i inventory SetupGrafana.yml'
+                withCredentials([file(credentialsId: 'ansible-key', variable: 'ANSIBLE_KEY')]) {
+                    dir('./Ansible') {
+                        echo "Running Ansible playbook to install Grafana on VM4"
+                        sh 'pwd'
+                        //sh 'ls -l'
+                        sh 'ansible-playbook SetupGrafana.yml --private-key $ANSIBLE_KEY'
+                }
+                }
             }
         }
 
         stage('Send Grafana Setup Notification') {
             steps {
                 script {
-                    def grafanaURL = 'http://vm4.example.com:3000'
+                    def grafanaURL = 'http://54.166.94.37/:3000'
 
                     emailext(
                         subject: "Grafana Setup Notification: ${currentBuild.fullDisplayName}",
@@ -98,6 +112,7 @@ pipeline {
             emailext(
                 subject: "Jenkins Build Failed: ${currentBuild.fullDisplayName}",
                 body: """
+                
                     <p>The Jenkins build has failed.</p>
                     <p>Check the Jenkins console output for more details.</p>
                 """,
